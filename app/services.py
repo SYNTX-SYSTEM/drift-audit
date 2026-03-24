@@ -2,7 +2,7 @@ from app.models import Submission, StatusEnum
 from app.storage import save_file
 
 VALID_TRANSITIONS = {
-    "pending": ["in_progress"],
+    "pending": ["in_progress", "awaiting_payment"],
     "in_progress": ["awaiting_payment"],
     "awaiting_payment": ["paid"],
     "paid": ["delivered"]

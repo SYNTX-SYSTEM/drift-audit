@@ -32,8 +32,8 @@ def create_order(submission_id: str, amount: float):
             "custom_id": submission_id
         }],
         "application_context": {
-            "return_url": "https://deinedomain.com/success",
-            "cancel_url": "https://deinedomain.com/cancel"
+            "return_url": "https://audit.syntx-system.com/success",
+            "cancel_url": "https://audit.syntx-system.com/cancel"
         }
     }
     response = requests.post(url, headers=headers, json=data)
