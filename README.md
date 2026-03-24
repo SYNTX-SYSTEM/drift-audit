@@ -254,6 +254,7 @@ SMTP_PORT=587
 SMTP_USER=a5d75a001@smtp-brevo.com
 SMTP_PASSWORD=BREVO_SMTP_PASSWORD
 FROM_EMAIL=audit@syntx-system.com
+SMTP_KEY=REDACTED_SMTP_PASSWORD
 ```
 
 **⚠ NIEMALS in Git pushen. .gitignore prüfen.**
