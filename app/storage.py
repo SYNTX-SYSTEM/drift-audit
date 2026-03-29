@@ -8,6 +8,7 @@ def save_file(file):
     path = os.path.join(settings.UPLOAD_DIR, filename)
 
     with open(path, "wb") as buffer:
-        buffer.write(file.file.read())
+        while chunk := file.file.read(1024 * 64):
+            buffer.write(chunk)
 
     return path
