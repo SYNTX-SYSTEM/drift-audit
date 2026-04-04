@@ -25,6 +25,7 @@ class SubmissionDetail(BaseModel):
     status: StatusEnum
     payment_order_id: Optional[str] = None
     proton_link: Optional[str] = None
+    paypal_link: Optional[str] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
     model_config = {"from_attributes": True}

@@ -1,3 +1,6 @@
+from typing import Optional
+
+# ── FALLBACK TRANSLATIONS (DB ist primär) ─────────────────────
 TRANSLATIONS = {
     "EN": {
         "pending_subject": "Drift Audit – Request Received",
@@ -371,9 +374,25 @@ ID заявки: {submission_id}
     },
 }
 
-def get_translation(language: str, key: str, **kwargs) -> str:
+
+def get_translation(language: str, key: str, db=None, **kwargs) -> str:
     lang = (language or "EN").upper()
     if lang not in TRANSLATIONS:
         lang = "EN"
-    text = TRANSLATIONS[lang].get(key, TRANSLATIONS["EN"][key])
+
+    # ── DB FIRST ──────────────────────────────────────────────
+    if db is not None:
+        try:
+            from app.models.structure import MailTemplate
+            template = db.query(MailTemplate).filter_by(
+                language=lang, key=key
+            ).first()
+            if template:
+                text = template.content
+                return text.format(**kwargs) if kwargs else text
+        except Exception:
+            pass
+
+    # ── FALLBACK: translations.py ──────────────────────────────
+    text = TRANSLATIONS[lang].get(key, TRANSLATIONS["EN"].get(key, ""))
     return text.format(**kwargs) if kwargs else text

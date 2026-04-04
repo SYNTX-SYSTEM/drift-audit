@@ -47,3 +47,16 @@ class PDFItem(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     category = relationship("Category", back_populates="pdf_items")
+
+class MailTemplate(Base):
+    __tablename__ = "mail_templates"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    language = Column(String, nullable=False)
+    key = Column(String, nullable=False)
+    content = Column(Text, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    __table_args__ = (
+        __import__('sqlalchemy').UniqueConstraint('language', 'key', name='uq_mail_template_lang_key'),
+    )

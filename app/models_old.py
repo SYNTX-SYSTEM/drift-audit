@@ -24,6 +24,7 @@ class Submission(Base):
     payment_order_id = Column(String, nullable=True)
     proton_link = Column(String, nullable=True)
     delivery_password = Column(String, nullable=True)
+    paypal_link = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
