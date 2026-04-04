@@ -10,7 +10,7 @@ app = FastAPI(title="Drift Audit API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://audit.syntx-system.com"],
+    allow_origins=["https://audit.syntx-system.com", "https://admin.syntx-system.com"],
     allow_methods=["*"],
     allow_headers=["*"],
 )

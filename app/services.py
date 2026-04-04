@@ -38,6 +38,7 @@ def transition_status(db, submission, new_status: str):
 # ─── STRUCTURE DOMAIN ───────────────────────────────────────────
 
 from app.models.structure import SuperCategory, Category, PDFItem
+from sqlalchemy.orm import joinedload
 
 def create_super_category(db, name: str, order: int = 0):
     obj = SuperCategory(name=name, order=order)
@@ -61,7 +62,7 @@ def create_pdf_item(db, title: str, file_url: str, category_id, description: str
     return obj
 
 def get_full_structure(db):
-    supers = db.query(SuperCategory).filter_by(is_active=True).order_by(SuperCategory.order).all()
+    supers = db.query(SuperCategory).options(joinedload(SuperCategory.categories).joinedload(Category.pdf_items)).filter_by(is_active=True).order_by(SuperCategory.order).all()
     result = []
     for sc in supers:
         cats = []
