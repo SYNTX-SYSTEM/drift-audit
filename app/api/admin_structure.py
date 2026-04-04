@@ -107,3 +107,39 @@ def reorder(payload: ReorderPayload, db: Session = Depends(get_db), token: str =
         raise HTTPException(status_code=400, detail="Invalid type")
     reorder_entities(db, model, [{"id": i.id, "order": i.order} for i in payload.items])
     return {"status": "reordered"}
+
+# ── ADMIN STRUCTURE (full, with is_active) ────────────────────
+
+@router.get("/admin/structure")
+def get_admin_structure(db: Session = Depends(get_db), token: str = Depends(verify_admin)):
+    from sqlalchemy.orm import joinedload
+    scs = db.query(SuperCategory).options(
+        joinedload(SuperCategory.categories).joinedload(Category.pdf_items)
+    ).order_by(SuperCategory.order).all()
+    result = []
+    for sc in scs:
+        cats = []
+        for cat in sorted(sc.categories, key=lambda x: x.order):
+            pdfs = []
+            for pdf in sorted(cat.pdf_items, key=lambda x: x.order):
+                pdfs.append({
+                    "id": str(pdf.id), "title": pdf.title,
+                    "file_url": pdf.file_url, "order": pdf.order,
+                    "is_active": pdf.is_active, "category_id": str(pdf.category_id),
+                    "filename": pdf.file_url.split("/")[-1] if pdf.file_url else None
+                })
+            cats.append({
+                "id": str(cat.id), "name": cat.name, "order": cat.order,
+                "is_active": cat.is_active, "super_category_id": str(cat.super_category_id),
+                "pdfs": pdfs
+            })
+        result.append({
+            "id": str(sc.id), "name": sc.name, "order": sc.order,
+            "is_active": sc.is_active, "categories": cats
+        })
+    return result
+
+@router.get("/admin/structure")
+def get_admin_structure(db: Session = Depends(get_db), token: str = Depends(verify_admin)):
+    from app.services import get_full_structure_admin
+    return get_full_structure_admin(db)

@@ -96,3 +96,23 @@ def reorder_entities(db, model, items):
         if obj:
             obj.order = item["order"]
     db.commit()
+
+def get_full_structure_admin(db):
+    from sqlalchemy.orm import joinedload
+    supers = db.query(SuperCategory).options(
+        joinedload(SuperCategory.categories).joinedload(Category.pdf_items)
+    ).order_by(SuperCategory.order).all()
+    result = []
+    for sc in supers:
+        cats = []
+        for cat in sorted(sc.categories, key=lambda c: c.order):
+            pdfs = [{"id": str(p.id), "title": p.title, "description": p.description,
+                     "file_url": p.file_url, "order": p.order, "is_active": p.is_active,
+                     "category_id": str(p.category_id)}
+                    for p in sorted(cat.pdf_items, key=lambda p: p.order)]
+            cats.append({"id": str(cat.id), "name": cat.name, "order": cat.order,
+                         "is_active": cat.is_active, "super_category_id": str(cat.super_category_id),
+                         "pdfs": pdfs})
+        result.append({"id": str(sc.id), "name": sc.name, "order": sc.order,
+                       "is_active": sc.is_active, "categories": cats})
+    return result
