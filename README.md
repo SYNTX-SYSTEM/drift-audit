@@ -1,435 +1,495 @@
-# ⚡ DRIFT AUDIT BACKEND
-### SYNTX SYSTEM — CHARLOTTENBURGER DOKUMENTATION
-**TRUE_RAW. KEIN OVERENGINEERING. PRODUCTION-READY.**
+⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡
 
----
+    ██████╗ ██████╗ ██╗███████╗████████╗
+    ██╔══██╗██╔══██╗██║██╔════╝╚══██╔══╝
+    ██║  ██║██████╔╝██║█████╗     ██║   
+    ██║  ██║██╔══██╗██║██╔══╝     ██║   
+    ██████╔╝██║  ██║██║██║        ██║   
+    ╚═════╝ ╚═╝  ╚═╝╚═╝╚═╝        ╚═╝   
+    
+         A U D I T   B A C K E N D
+         Charlottenburger Strasse. Berlin. 2026.
 
-## 0 WAS IST DAS HIER
+⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡
+
+TRUE_RAW. KEIN OVERENGINEERING. PRODUCTION-READY.
+KEIN MVP-GEFRICKEL. SAUBERE SERVICE-INFRASTRUKTUR.
+
+══════════════════════════════════════════════════
+  0  //  WAS IST DAS HIER
+══════════════════════════════════════════════════
 
 Zwei Domains. Ein Backend. Null Kompromisse.
 
-Domain 1 - Drift Audit Service:
-Ein manuell-gesteuerter, payment-gesicherter, zero-trust Delivery Loop.
-Kein Blind-Kauf. Keine ungesicherten Links. Kein Framework-Cargo.
+🔴 DOMAIN 1 — DRIFT AUDIT SERVICE
+   Manuell gesteuerter, payment-gesicherter,
+   zero-trust Delivery Loop.
+   Kein Blind-Kauf. Keine ungesicherten Links.
+   Kein Framework-Cargo. Mensch im Loop.
 
-Domain 2 - Structure / Orbit PDF System:
-Eine hierarchische PDF-Bibliothek (SuperCategory > Category > PDFItem).
-Oeffentlich abrufbar. Fuer den Orbit im Frontend.
+🟢 DOMAIN 2 — STRUCTURE / ORBIT PDF SYSTEM
+   Hierarchische PDF-Bibliothek.
+   SuperCategory → Category → PDFItem.
+   Oeffentlich. Fuer den Orbit im Frontend.
 
-DOMAIN 1 - SUBMISSION FLOW
-User submit -> Alert an Admin -> User bekommt pending
-Admin analysiert (manuell)
-Admin triggert /ready -> PayPal Link -> Mail an User
-User zahlt -> Webhook -> status = paid
-Mail 1: Proton Drive Link
-Mail 2: OneTimeSecret Passwort
-DONE
+┌─────────────────────────────────────────────┐
+│  DOMAIN 1 // SUBMISSION FLOW                │
+│                                             │
+│  User submit                                │
+│       ↓                                     │
+│  ⚡ Alert → Admin                           │
+│       ↓                                     │
+│  🔍 Analyse (manuell — das ist der Job)     │
+│       ↓                                     │
+│  💳 /ready → PayPal Link → Mail an User     │
+│       ↓                                     │
+│  ✅ Zahlung → Webhook → paid                │
+│       ↓                                     │
+│  📦 Mail 1: Proton Drive Link               │
+│  🔑 Mail 2: OneTimeSecret Passwort          │
+│       ↓                                     │
+│  DONE. ZERO TRUST. SAUBER.                  │
+└─────────────────────────────────────────────┘
 
-DOMAIN 2 - STRUCTURE / ORBIT
-GET /structure -> verschachtelte PDF-Bibliothek
-Admin CRUD -> SuperCategory / Category / PDFItem
-File Upload -> lokal auf Server -> oeffentlich abrufbar
+┌─────────────────────────────────────────────┐
+│  DOMAIN 2 // STRUCTURE / ORBIT              │
+│                                             │
+│  GET /structure                             │
+│       → verschachtelte PDF-Bibliothek       │
+│       → SuperCategory → Category → PDF      │
+│       → nur is_active=True                  │
+│       → geordnet nach order                 │
+│                                             │
+│  Admin CRUD + Reorder + Soft Delete         │
+│  File Upload → lokal → oeffentlich          │
+└─────────────────────────────────────────────┘
 
----
+══════════════════════════════════════════════════
+  1  //  SERVER
+══════════════════════════════════════════════════
 
-## 1 SERVER
+🖥️  Hetzner Ubuntu 24.04 — 30GB RAM / 150GB Disk
 
-Hetzner Ubuntu 24.04 - 30GB RAM / 150GB Disk
+  IP         →  49.13.3.21
+  HTTPS      →  https://audit.syntx-system.com
+  INTERN     →  http://127.0.0.1:8080
+  PATH       →  /opt/drift-backend
+  LOGS       →  /var/log/drift-backend/
+  UPLOADS    →  /opt/drift-backend/uploads/
+  SWAGGER    →  https://audit.syntx-system.com/docs
 
-IP:         49.13.3.21
-HTTPS:      https://audit.syntx-system.com
-Intern:     http://127.0.0.1:8080
-Path:       /opt/drift-backend
-Logs:       /var/log/drift-backend/
-Uploads:    /opt/drift-backend/uploads/
-Swagger:    https://audit.syntx-system.com/docs
+⛔ PORTS — NICHT ANFASSEN:
 
-Belegte Ports (NICHT ANFASSEN):
-8000 -> uvicorn  (SYNTX LLM)
-8001 -> python   (SYNTX Service)
-8040 -> python3  (SYNTX Generator)
-8080 -> gunicorn (DRIFT AUDIT - WIR)
-8090 -> nginx    -> 8080 (alt, HTTP only)
-443  -> nginx    -> audit.syntx-system.com -> 8080
+  8000  →  uvicorn   (SYNTX LLM)
+  8001  →  python    (SYNTX Service)
+  8040  →  python3   (SYNTX Generator)
+  8080  →  gunicorn  (DRIFT AUDIT ← WIR)
+  8090  →  nginx     → 8080 (alt, HTTP only)
+  443   →  nginx     → audit.syntx-system.com → 8080
 
----
+══════════════════════════════════════════════════
+  2  //  TECH STACK
+══════════════════════════════════════════════════
 
-## 2 TECH STACK
+  FastAPI          →  API Framework
+  Gunicorn         →  WSGI Server (4 Workers)
+  Uvicorn Worker   →  ASGI Worker
+  PostgreSQL 16    →  Datenbank (lokal)
+  SQLAlchemy 2.0   →  ORM
+  Alembic          →  Migrations
+  python-multipart →  File Upload
+  requests         →  PayPal + Brevo HTTP
+  slowapi          →  Rate Limiting
+  Brevo API        →  Mail Relay (Transactional)
+  Nginx            →  Reverse Proxy + SSL
+  certbot          →  SSL (auto-renewal)
+  systemd          →  Service Manager
 
-FastAPI          - API Framework
-Gunicorn         - WSGI Server (4 Workers)
-Uvicorn Worker   - ASGI Worker
-PostgreSQL 16    - Datenbank (lokal)
-SQLAlchemy 2.0   - ORM
-Alembic          - Migrations
-python-multipart - File Upload
-requests         - PayPal + Brevo HTTP
-slowapi          - Rate Limiting
-Brevo API        - Mail Relay (Transactional)
-Nginx            - Reverse Proxy + SSL
-certbot          - SSL Zertifikate (auto-renewal)
-systemd          - Service Manager
-
----
-
-## 3 PROJEKTSTRUKTUR
+══════════════════════════════════════════════════
+  3  //  PROJEKTSTRUKTUR
+══════════════════════════════════════════════════
 
 /opt/drift-backend/
+│
 ├── app/
-│   ├── __init__.py
-│   ├── main.py              <- FastAPI App + Router + CORS + StaticFiles
-│   ├── config.py            <- Settings aus .env
-│   ├── database.py          <- SQLAlchemy Engine + Session
-│   ├── models_old.py        <- Submission + PaymentEvent + StatusEnum
+│   ├── main.py              ⚡ FastAPI + Router + CORS + StaticFiles
+│   ├── config.py            🔧 Settings aus .env
+│   ├── database.py          🗄️  SQLAlchemy Engine + Session
+│   ├── models_old.py        📦 Submission + PaymentEvent + StatusEnum
 │   ├── models/
-│   │   ├── __init__.py      <- re-exports alle Models
-│   │   └── structure.py     <- SuperCategory, Category, PDFItem
-│   ├── schemas.py           <- Pydantic Response Models
-│   ├── services.py          <- Business Logic (beide Domains)
-│   ├── storage.py           <- File Handling (chunked, lokal)
-│   ├── email_service.py     <- Brevo API, multilingual
-│   ├── translations.py      <- 10 Sprachen EN/DE/ZH/ES/HI/AR/PT/BN/RU/JA
-│   ├── paypal_service.py    <- PayPal Live REST API
+│   │   ├── __init__.py      🔗 re-exports alle Models
+│   │   └── structure.py     🏗️  SuperCategory, Category, PDFItem
+│   ├── schemas.py           📐 Pydantic Domain 1
+│   ├── schemas_structure.py 📐 Pydantic Domain 2
+│   ├── services.py          🧠 Business Logic (beide Domains)
+│   ├── storage.py           💾 File Handling (chunked, lokal)
+│   ├── email_service.py     📧 Brevo API, multilingual
+│   ├── translations.py      🌍 10 Sprachen
+│   ├── paypal_service.py    💳 PayPal Live REST API
 │   └── api/
-│       ├── __init__.py
-│       ├── submit.py        <- POST /submit
-│       ├── admin.py         <- Admin Submission Endpoints
-│       ├── admin_structure.py <- Admin Structure Endpoints
-│       ├── payment.py       <- PayPal Webhook
-│       └── structure.py     <- GET /structure (public)
-├── alembic/
-│   ├── env.py
-│   └── versions/
-│       ├── dbd2d72bb804_initial.py
-│       └── 3fcca0527b7e_add_structure_domain.py
-├── alembic.ini
-├── uploads/                 <- User PDFs + Structure PDFs
-├── .env                     <- SECRETS (nie committen!)
+│       ├── submit.py        → POST /submit
+│       ├── admin.py         → Admin Submission Endpoints
+│       ├── admin_structure.py → Admin Structure Endpoints
+│       ├── payment.py       → PayPal Webhook
+│       └── structure.py     → GET /structure (public)
+│
+├── alembic/versions/
+│   ├── dbd2d72bb804_initial.py
+│   └── 3fcca0527b7e_add_structure_domain.py
+│
+├── uploads/                 📁 User PDFs + Structure PDFs
+├── .env                     🔒 SECRETS — NIE COMMITTEN
 ├── .gitignore
-├── run.sh                   <- Gunicorn Start Script
+├── run.sh                   🚀 Gunicorn Start
 └── venv/
 
----
+══════════════════════════════════════════════════
+  4  //  DATENBANK
+══════════════════════════════════════════════════
 
-## 4 DATENBANK
+🗄️  PostgreSQL 16 lokal
+    DB:    driftaudit
+    User:  driftuser
+    Host:  localhost
 
-PostgreSQL 16 lokal
-DB:     driftaudit
-User:   driftuser
-Host:   localhost
+── DOMAIN 1 ──────────────────────────────────────
 
-DOMAIN 1 - Tables:
+  SUBMISSIONS
+  ├── id               UUID PRIMARY KEY
+  ├── url              VARCHAR NOT NULL
+  ├── email            VARCHAR NOT NULL
+  ├── file_path        VARCHAR
+  ├── language         VARCHAR
+  ├── status           ENUM pending|in_progress|
+  │                         awaiting_payment|paid|delivered
+  ├── payment_order_id VARCHAR
+  ├── proton_link      VARCHAR
+  ├── delivery_password VARCHAR
+  ├── created_at       TIMESTAMP
+  └── updated_at       TIMESTAMP
 
-SUBMISSIONS
-id               UUID PRIMARY KEY
-url              VARCHAR NOT NULL
-email            VARCHAR NOT NULL
-file_path        VARCHAR
-language         VARCHAR
-status           ENUM pending|in_progress|awaiting_payment|paid|delivered
-payment_order_id VARCHAR
-proton_link      VARCHAR
-delivery_password VARCHAR
-created_at       TIMESTAMP
-updated_at       TIMESTAMP
+  PAYMENT_EVENTS (idempotent)
+  ├── id               VARCHAR PRIMARY KEY  ← PayPal Event ID
+  ├── provider         VARCHAR
+  ├── event_type       VARCHAR
+  ├── payload          JSONB
+  ├── processed        BOOLEAN
+  └── created_at       TIMESTAMP
 
-PAYMENT_EVENTS (idempotent event storage)
-id               VARCHAR PRIMARY KEY  <- PayPal Event ID
-provider         VARCHAR
-event_type       VARCHAR
-payload          JSONB
-processed        BOOLEAN
-created_at       TIMESTAMP
+── DOMAIN 2 ──────────────────────────────────────
 
-DOMAIN 2 - Tables:
+  SUPER_CATEGORIES
+  ├── id          UUID PRIMARY KEY
+  ├── name        VARCHAR NOT NULL
+  ├── order       INTEGER DEFAULT 0
+  ├── is_active   BOOLEAN DEFAULT TRUE
+  ├── created_at  TIMESTAMP
+  └── updated_at  TIMESTAMP
 
-SUPER_CATEGORIES
-id          UUID PRIMARY KEY
-name        VARCHAR NOT NULL
-order       INTEGER DEFAULT 0
-is_active   BOOLEAN DEFAULT TRUE
-created_at  TIMESTAMP
-updated_at  TIMESTAMP
+  CATEGORIES
+  ├── id                UUID PRIMARY KEY
+  ├── name              VARCHAR NOT NULL
+  ├── super_category_id UUID FK → super_categories.id
+  ├── order             INTEGER DEFAULT 0
+  ├── is_active         BOOLEAN DEFAULT TRUE
+  ├── created_at        TIMESTAMP
+  └── updated_at        TIMESTAMP
 
-CATEGORIES
-id                  UUID PRIMARY KEY
-name                VARCHAR NOT NULL
-super_category_id   UUID FK -> super_categories.id
-order               INTEGER DEFAULT 0
-is_active           BOOLEAN DEFAULT TRUE
-created_at          TIMESTAMP
-updated_at          TIMESTAMP
+  PDF_ITEMS
+  ├── id           UUID PRIMARY KEY
+  ├── title        VARCHAR NOT NULL
+  ├── description  TEXT
+  ├── file_url     VARCHAR NOT NULL
+  ├── category_id  UUID FK → categories.id
+  ├── order        INTEGER DEFAULT 0
+  ├── is_active    BOOLEAN DEFAULT TRUE
+  ├── created_at   TIMESTAMP
+  └── updated_at   TIMESTAMP
 
-PDF_ITEMS
-id           UUID PRIMARY KEY
-title        VARCHAR NOT NULL
-description  TEXT
-file_url     VARCHAR NOT NULL
-category_id  UUID FK -> categories.id
-order        INTEGER DEFAULT 0
-is_active    BOOLEAN DEFAULT TRUE
-created_at   TIMESTAMP
-updated_at   TIMESTAMP
+══════════════════════════════════════════════════
+  5  //  STATE MACHINE
+══════════════════════════════════════════════════
 
----
+  pending
+     ↓
+  in_progress
+     ↓
+  awaiting_payment
+     ↓
+  paid
+     ↓
+  delivered
 
-## 5 STATUS STATE MACHINE (Domain 1)
+  VALID_TRANSITIONS = {
+    pending:          [in_progress, awaiting_payment]
+    in_progress:      [awaiting_payment]
+    awaiting_payment: [paid]
+    paid:             [delivered]
+  }
 
-pending -> in_progress -> awaiting_payment -> paid -> delivered
+  Kein Rueckwaerts. Kein Ueberspringen. Integritaet.
 
-VALID_TRANSITIONS = {
-    "pending":           ["in_progress", "awaiting_payment"],
-    "in_progress":       ["awaiting_payment"],
-    "awaiting_payment":  ["paid"],
-    "paid":              ["delivered"]
-}
+══════════════════════════════════════════════════
+  6  //  API ENDPOINTS
+══════════════════════════════════════════════════
 
-Kein Ueberspringen rueckwaerts. Integritaet.
+── DOMAIN 1 // SUBMISSION ────────────────────────
 
----
+  PUBLIC:
+  POST /submit
+    url, email, language, file (optional PDF)
+    → {id, status, created_at}
 
-## 6 API ENDPOINTS
+  ADMIN (Header: token: ADMIN_TOKEN):
+  GET   /admin/submissions?status=pending
+  PATCH /admin/submissions/{id}/ready
+          ?proton_link=...&delivery_password=...
+  PATCH /admin/submissions/{id}/status
+          ?new_status=...
 
-DOMAIN 1 - SUBMISSION
+  WEBHOOK:
+  POST  /payment/webhook
+          ← PayPal CHECKOUT.ORDER.APPROVED
 
-PUBLIC:
-POST /submit
-  Fields: url, email, language, file (optional PDF)
-  Response: {id, status, created_at}
+── DOMAIN 2 // STRUCTURE ─────────────────────────
 
-ADMIN (Header: token: ADMIN_TOKEN):
-GET   /admin/submissions?status=pending
-PATCH /admin/submissions/{id}/ready?proton_link=...&delivery_password=...
-PATCH /admin/submissions/{id}/status?new_status=...
+  PUBLIC:
+  GET /structure
+    → [{id, name, order, categories:
+         [{id, name, order, pdfs: [...]}]}]
+    → nur is_active=True, geordnet nach order
 
-WEBHOOK:
-POST /payment/webhook  <- PayPal sendet CHECKOUT.ORDER.APPROVED
+  GET /uploads/{filename}
+    → PDFs direkt abrufbar
 
-DOMAIN 2 - STRUCTURE
+  ADMIN (Header: token: ADMIN_TOKEN):
+  POST   /admin/super-categories
+  PUT    /admin/super-categories/{id}
+  DELETE /admin/super-categories/{id}   ← soft delete
 
-PUBLIC:
-GET /structure
-  Response: [{id, name, order, categories: [{id, name, order, pdfs: [...]}]}]
-  Nur is_active=True, geordnet nach order
+  POST   /admin/categories
+  PUT    /admin/categories/{id}
+  DELETE /admin/categories/{id}         ← soft delete
 
-GET /uploads/{filename}  <- PDFs oeffentlich abrufbar
+  POST   /admin/pdfs                    ← multipart + file
+  PUT    /admin/pdfs/{id}
+  DELETE /admin/pdfs/{id}               ← soft delete
 
-ADMIN (Header: token: ADMIN_TOKEN):
-POST   /admin/super-categories
-PUT    /admin/super-categories/{id}
-DELETE /admin/super-categories/{id}  <- soft delete
+  PATCH  /admin/reorder
+    Body: {
+      type: "super_category"|"category"|"pdf",
+      items: [{id, order}]
+    }
 
-POST   /admin/categories
-PUT    /admin/categories/{id}
-DELETE /admin/categories/{id}        <- soft delete
+══════════════════════════════════════════════════
+  7  //  ENVIRONMENT (.env)
+══════════════════════════════════════════════════
 
-POST   /admin/pdfs  <- multipart/form-data mit file
-PUT    /admin/pdfs/{id}
-DELETE /admin/pdfs/{id}              <- soft delete
+  DATABASE_URL="postgresql://driftuser:PASS@localhost/driftaudit"
+  UPLOAD_DIR=uploads
+  ADMIN_TOKEN=→in.env
 
-PATCH  /admin/reorder
-  Body: {type: "super_category"|"category"|"pdf", items: [{id, order}]}
+  PAYPAL_CLIENT_ID=→in.env
+  PAYPAL_CLIENT_SECRET=→in.env
+  PAYPAL_MODE=live
+  PAYPAL_WEBHOOK_ID=→in.env
 
----
+  BREVO_API_KEY=→in.env
+  FROM_EMAIL=audit@syntx-system.com
+  SMTP_HOST=smtp-relay.brevo.com
+  SMTP_PORT=587
+  SMTP_USER=→in.env
+  SMTP_PASSWORD=→in.env
 
-## 7 ENVIRONMENT (.env)
+  ⚠️  DATABASE_URL Password in Anführungszeichen wegen # !
+  🔒 NIEMALS in Git pushen. .gitignore pruefen.
 
-DATABASE_URL="postgresql://driftuser:PASS@localhost/driftaudit"
-UPLOAD_DIR=uploads
-ADMIN_TOKEN=->in.env  (openssl rand -base64 32)
-PAYPAL_CLIENT_ID=->in.env
-PAYPAL_CLIENT_SECRET=->in.env
-PAYPAL_MODE=live
-PAYPAL_WEBHOOK_ID=->in.env
-BREVO_API_KEY=->in.env
-FROM_EMAIL=audit@syntx-system.com
-SMTP_HOST=smtp-relay.brevo.com
-SMTP_PORT=587
-SMTP_USER=->in.env
-SMTP_PASSWORD=->in.env
+══════════════════════════════════════════════════
+  8  //  MAIL FLOW — 10 SPRACHEN
+══════════════════════════════════════════════════
 
-WICHTIG: DATABASE_URL Password in Anführungszeichen wegen # Zeichen!
-WICHTIG: NIEMALS in Git pushen. .gitignore pruefen.
+  Brevo Transactional API — textContent — kein HTML.
+  Sprache aus submission.language — Fallback: EN.
 
----
+  🌍 EN  DE  ZH  ES  HI  AR  PT  BN  RU  JA
 
-## 8 MAIL FLOW (10 Sprachen)
+  SUBMIT
+    → send_pending_email(user, lang)
+      "Eingang bestaetigt"
+    → send_admin_alert(admin)
+      "⚡ NEUE SUBMISSION"
 
-Alle Mails via Brevo Transactional API (textContent - kein HTML).
-Sprache kommt aus submission.language - Fallback: EN.
+  ADMIN /ready
+    → send_ready_email(user, lang)
+      "Fertig — hier zahlen: {paypal_link}"
 
-Unterstuetzte Sprachen: EN, DE, ZH, ES, HI, AR, PT, BN, RU, JA
+  WEBHOOK paid
+    → send_delivery_link(user, lang)
+      "Proton Link: {proton_link}"
+    → send_delivery_password(user, lang)
+      "Passwort: {password}"
 
-SUBMIT
-  -> send_pending_email(user, language)     "Eingang bestaetigt"
-  -> send_admin_alert(admin)                "NEUE SUBMISSION - email"
+  🔐 ZERO-TRUST: Link + Passwort = zwei separate Mails.
+     Passwort = OneTimeSecret Link empfohlen.
 
-ADMIN /ready
-  -> send_ready_email(user, language)       "Fertig - hier zahlen: {paypal_link}"
+══════════════════════════════════════════════════
+  9  //  BREVO SETUP
+══════════════════════════════════════════════════
 
-WEBHOOK paid
-  -> send_delivery_link(user, language)     "Proton Link: {proton_link}"
-  -> send_delivery_password(user, language) "Passwort: {password}"
+  Account:  syntxsystem@gmail.com
+  Plan:     Free (300 Mails/Tag)
+  Sender:   audit@syntx-system.com (Proton Alias) ✔
+  API Key:  drift-audit → .env als BREVO_API_KEY
 
-Zero-Trust Delivery:
-Link und Passwort kommen in zwei separaten Mails.
-Passwort = OneTimeSecret Link empfohlen.
+  DNS (Namecheap):
+  TXT   @   v=spf1 include:_spf.protonmail.ch
+                   include:spf.brevo.com mx ~all ✔
+  TXT   @   brevo-code:ddbb9d0d2548d3a481deb109a5099dbf ✔
+  CNAME brevo1._domainkey → b1.syntx-system-com.dkim.brevo.com ✔
+  CNAME brevo2._domainkey → b2.syntx-system-com.dkim.brevo.com ✔
+  TXT   _dmarc → v=DMARC1; p=none; rua=... ✔
 
----
+  ⚠️  BEKANNTES PROBLEM:
+  GMX/Arcor/Web.de → Spam wegen Brevo IP-Reputation.
+  Gmail/iCloud/Outlook → funktioniert.
+  FIX PENDING: Port 25 bei Hetzner → Max fragen.
 
-## 9 BREVO SETUP
+══════════════════════════════════════════════════
+  10  //  SSL & NGINX
+══════════════════════════════════════════════════
 
-Account: syntxsystem@gmail.com
-Plan: Free (300 Mails/Tag)
-Sender: audit@syntx-system.com (Proton Alias)
-API Key: drift-audit <- in .env als BREVO_API_KEY
+  Domain:  audit.syntx-system.com → 49.13.3.21
+  SSL:     Let's Encrypt via certbot (auto-renewal) ✔
+  Config:  /etc/nginx/sites-available/audit.syntx-system.com
 
-DNS Records (Namecheap):
-TXT   @                  v=spf1 include:_spf.protonmail.ch include:spf.brevo.com mx ~all
-TXT   @                  brevo-code:ddbb9d0d2548d3a481deb109a5099dbf
-CNAME brevo1._domainkey  b1.syntx-system-com.dkim.brevo.com
-CNAME brevo2._domainkey  b2.syntx-system-com.dkim.brevo.com
-TXT   _dmarc             v=DMARC1; p=none; rua=mailto:rua@dmarc.brevo.com
-
-Bekanntes Problem:
-GMX/Arcor/Web.de landen im Spam wegen Brevo IP-Reputation.
-Gmail/iCloud/Outlook funktionieren.
-Loesung pending: Port 25 (Hetzner) -> direkter SMTP (Max fragen).
-
----
-
-## 10 SSL & NGINX
-
-Domain: audit.syntx-system.com -> A Record -> 49.13.3.21
-Zertifikat: Let's Encrypt via certbot (auto-renewal)
-Config: /etc/nginx/sites-available/audit.syntx-system.com
-
-server {
+  server {
     listen 443 ssl http2;
     server_name audit.syntx-system.com;
     location / {
-        proxy_pass http://127.0.0.1:8080;
-        client_max_body_size 20M;
+      proxy_pass http://127.0.0.1:8080;
+      client_max_body_size 20M;
     }
-}
+  }
 
----
+══════════════════════════════════════════════════
+  11  //  PAYPAL (LIVE)
+══════════════════════════════════════════════════
 
-## 11 PAYPAL SETUP (Live)
+  App:         DRIFT-AUDIT (Live) ✔
+  Account:     mirror@syntx-system.com
+  Webhook:     https://audit.syntx-system.com/payment/webhook
+  Webhook ID:  3YH07794KV8190429
+  Event:       CHECKOUT.ORDER.APPROVED
+  Mode:        live ✔
+  Preis:       49.00 EUR (hardcoded in admin.py)
 
-App: DRIFT-AUDIT (Live)
-Account: mirror@syntx-system.com
-Webhook URL: https://audit.syntx-system.com/payment/webhook
-Webhook ID: 3YH07794KV8190429
-Event: CHECKOUT.ORDER.APPROVED
-Mode: live
-Preis: 49.00 EUR (hardcoded in admin.py)
+══════════════════════════════════════════════════
+  12  //  SYSTEMD
+══════════════════════════════════════════════════
 
----
+  systemctl start|stop|restart drift-backend
+  journalctl -u drift-backend -f
+  tail -f /var/log/drift-backend/error.log
+  tail -f /var/log/drift-backend/access.log
 
-## 12 SYSTEMD SERVICE
+  run.sh:
+  exec gunicorn app.main:app \
+    --workers 4 \
+    --worker-class uvicorn.workers.UvicornWorker \
+    --bind 127.0.0.1:8080 \
+    --access-logfile /var/log/drift-backend/access.log \
+    --error-logfile /var/log/drift-backend/error.log
 
-File: /etc/systemd/system/drift-backend.service
+══════════════════════════════════════════════════
+  13  //  DEPLOYMENT (VON NULL)
+══════════════════════════════════════════════════
 
-systemctl start|stop|restart drift-backend
-journalctl -u drift-backend -f
-tail -f /var/log/drift-backend/error.log
-tail -f /var/log/drift-backend/access.log
+  cd /opt && mkdir drift-backend && cd drift-backend
+  python3 -m venv venv && source venv/bin/activate
 
-run.sh:
-exec gunicorn app.main:app \
-  --workers 4 \
-  --worker-class uvicorn.workers.UvicornWorker \
-  --bind 127.0.0.1:8080 \
-  --access-logfile /var/log/drift-backend/access.log \
-  --error-logfile /var/log/drift-backend/error.log
+  pip install fastapi uvicorn gunicorn sqlalchemy \
+    psycopg2-binary python-dotenv pydantic alembic \
+    python-multipart requests slowapi
 
----
+  apt install postgresql -y
+  sudo -u postgres psql -c \
+    "CREATE USER driftuser WITH PASSWORD 'PASS';"
+  sudo -u postgres psql -c \
+    "CREATE DATABASE driftaudit OWNER driftuser;"
 
-## 13 DEPLOYMENT (von null)
+  mkdir uploads
+  # .env befüllen — DATABASE_URL in Anführungszeichen!
 
-cd /opt && mkdir drift-backend && cd drift-backend
-python3 -m venv venv && source venv/bin/activate
+  alembic upgrade head
+  systemctl daemon-reload
+  systemctl enable drift-backend
+  systemctl start drift-backend
+  certbot --nginx -d audit.syntx-system.com
 
-pip install fastapi uvicorn gunicorn sqlalchemy psycopg2-binary \
-    python-dotenv pydantic alembic python-multipart requests slowapi
+══════════════════════════════════════════════════
+  14  //  ADMIN WORKFLOW (TAEGLICH)
+══════════════════════════════════════════════════
 
-apt install postgresql -y
-sudo -u postgres psql -c "CREATE USER driftuser WITH PASSWORD 'PASS';"
-sudo -u postgres psql -c "CREATE DATABASE driftaudit OWNER driftuser;"
+  1. 👀 Submissions checken:
+     GET /admin/submissions?status=pending
 
-mkdir uploads
-# .env befüllen (DATABASE_URL in Anführungszeichen!)
+  2. 🔍 Analyse machen. Manuell. Das ist der Job.
 
-alembic upgrade head
+  3. 📦 Proton Drive Link erstellen.
+     🔑 OneTimeSecret generieren: onetimesecret.com
 
-systemctl daemon-reload
-systemctl enable drift-backend
-systemctl start drift-backend
+  4. ⚡ Audit fertig triggern:
+     PATCH /admin/submissions/{id}/ready
+       ?proton_link=https://...
+       ?delivery_password=https://onetimesecret.com/...
 
-certbot --nginx -d audit.syntx-system.com
+  5. 💳 User zahlt via PayPal.
+     Webhook → paid → Delivery Mails automatisch raus.
 
----
+  6. ✅ Delivered setzen:
+     PATCH /admin/submissions/{id}/status
+       ?new_status=delivered
 
-## 14 ADMIN WORKFLOW (taeglich)
+  🖥️  Admin Dashboard:
+  Standalone HTML — lokal im Browser oeffnen.
+  Token-Auth. Direkt gegen API.
 
-1. Neue Submissions checken:
-   GET /admin/submissions?status=pending
+══════════════════════════════════════════════════
+  15  //  TODO
+══════════════════════════════════════════════════
 
-2. Analyse machen (manuell)
+  ☐ Port 25 bei Hetzner (Max fragen)
+  ☐ Direkter SMTP → GMX/Arcor/Web.de fixen
+  ☐ PayPal Webhook Signature Verification
+  ☐ CORS erweitern wenn Frontend deployed
+  ☐ Preis konfigurierbar (aktuell 49.00 EUR hardcoded)
+  ☐ Repo privat schalten wenn stable
 
-3. Proton Drive Link erstellen
-   OneTimeSecret fuer Passwort generieren: onetimesecret.com
+══════════════════════════════════════════════════
+  16  //  SYSTEM STATUS
+══════════════════════════════════════════════════
 
-4. Audit fertig triggern:
-   PATCH /admin/submissions/{id}/ready
-     ?proton_link=https://...
-     ?delivery_password=https://onetimesecret.com/...
+  ✔ Zwei Domains (Submission + Structure)
+  ✔ HTTPS + SSL auto-renewal
+  ✔ Mail Flow (Brevo API, 10 Sprachen)
+  ✔ Zero-Trust Delivery
+  ✔ Idempotente Webhook-Verarbeitung
+  ✔ State Machine (5 States)
+  ✔ Background Tasks (non-blocking)
+  ✔ Systemd Autostart + Restart
+  ✔ PostgreSQL lokal
+  ✔ File Upload + Static File Serving
+  ✔ Soft Delete (is_active)
+  ✔ Reorder (bulk)
+  ✔ Pydantic Response Models
+  ✔ joinedload (kein N+1)
+  ✔ Git → github.com/SYNTX-SYSTEM/drift-audit
+  ✔ Admin Dashboard (standalone HTML)
 
-5. User zahlt via PayPal
-   Webhook setzt status=paid automatisch
-   Delivery Mails gehen automatisch raus
+⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡
 
-6. Status auf delivered setzen:
-   PATCH /admin/submissions/{id}/status?new_status=delivered
+  SYNTX SYSTEM — DRIFT AUDIT V1
+  Charlottenburger Strasse. Berlin. 2026.
+  TRUE_RAW. KEIN OVERENGINEERING. PRODUCTION-READY.
 
-Admin Dashboard HTML:
-Standalone HTML-Datei - lokal im Browser oeffnen.
-Spricht direkt mit API via Token-Auth.
-Endpoint: https://audit.syntx-system.com
-
----
-
-## 15 TODO
-
-Port 25 bei Hetzner freischalten (Max fragen)
-Direkter SMTP -> GMX/Arcor/Web.de Deliverability fixen
-PayPal Webhook Signature Verification
-CORS allow_origins erweitern wenn Frontend deployed
-Preis konfigurierbar machen (aktuell hardcoded 49.00 EUR)
-Repo privat schalten wenn stable
-
----
-
-## 16 SYSTEM EIGENSCHAFTEN
-
-Zwei Domains (Submission + Structure)
-HTTPS audit.syntx-system.com + SSL auto-renewal
-Mail Flow komplett (Brevo API, 10 Sprachen)
-Zero-Trust Delivery (Link + Passwort getrennt)
-Idempotente Webhook-Verarbeitung
-Status State Machine (5 States)
-Background Tasks (non-blocking)
-Systemd Autostart + Restart
-PostgreSQL lokal (150GB Disk, 30GB RAM)
-File Upload + Static File Serving
-Soft Delete (is_active=False)
-Reorder (bulk order update)
-Git Repository github.com/SYNTX-SYSTEM/drift-audit
-Admin Dashboard (standalone HTML)
-
----
-
-## SYNTX SYSTEM - DRIFT AUDIT V1
-Charlottenburger Strasse. Berlin. 2026.
-Kein MVP-Gefrickel. Saubere Service-Infrastruktur.
+⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡

@@ -10,6 +10,7 @@ from app.services import (
     update_entity, soft_delete, reorder_entities
 )
 from app.storage import save_file
+from app.schemas_structure import SuperCategoryResponse, CategoryResponse, PDFItemResponse, SuperCategoryPublic
 
 router = APIRouter()
 
@@ -23,11 +24,11 @@ class ReorderPayload(BaseModel):
 
 # ── SUPER CATEGORIES ──────────────────────────────────────────
 
-@router.post("/admin/super-categories")
+@router.post("/admin/super-categories", response_model=SuperCategoryResponse)
 def create_sc(name: str, order: int = 0, db: Session = Depends(get_db), token: str = Depends(verify_admin)):
     return create_super_category(db, name, order)
 
-@router.put("/admin/super-categories/{id}")
+@router.put("/admin/super-categories/{id}", response_model=SuperCategoryResponse)
 def update_sc(id: str, name: Optional[str] = None, order: Optional[int] = None, is_active: Optional[bool] = None,
               db: Session = Depends(get_db), token: str = Depends(verify_admin)):
     kwargs = {k: v for k, v in {"name": name, "order": order, "is_active": is_active}.items() if v is not None}
@@ -43,12 +44,12 @@ def delete_sc(id: str, db: Session = Depends(get_db), token: str = Depends(verif
 
 # ── CATEGORIES ────────────────────────────────────────────────
 
-@router.post("/admin/categories")
+@router.post("/admin/categories", response_model=CategoryResponse)
 def create_cat(name: str, super_category_id: str, order: int = 0,
                db: Session = Depends(get_db), token: str = Depends(verify_admin)):
     return create_category(db, name, super_category_id, order)
 
-@router.put("/admin/categories/{id}")
+@router.put("/admin/categories/{id}", response_model=CategoryResponse)
 def update_cat(id: str, name: Optional[str] = None, order: Optional[int] = None, is_active: Optional[bool] = None,
                db: Session = Depends(get_db), token: str = Depends(verify_admin)):
     kwargs = {k: v for k, v in {"name": name, "order": order, "is_active": is_active}.items() if v is not None}
@@ -64,7 +65,7 @@ def delete_cat(id: str, db: Session = Depends(get_db), token: str = Depends(veri
 
 # ── PDF ITEMS ─────────────────────────────────────────────────
 
-@router.post("/admin/pdfs")
+@router.post("/admin/pdfs", response_model=PDFItemResponse)
 async def create_pdf(
     title: str = Form(...),
     category_id: str = Form(...),
@@ -77,7 +78,7 @@ async def create_pdf(
     file_path = save_file(file)
     return create_pdf_item(db, title, file_path, category_id, description, order)
 
-@router.put("/admin/pdfs/{id}")
+@router.put("/admin/pdfs/{id}", response_model=PDFItemResponse)
 def update_pdf(id: str, title: Optional[str] = None, description: Optional[str] = None,
                order: Optional[int] = None, is_active: Optional[bool] = None,
                db: Session = Depends(get_db), token: str = Depends(verify_admin)):
