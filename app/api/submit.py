@@ -20,7 +20,7 @@ async def submit(
     submission = create_submission(db, url, email, language, file)
     has_file = file.filename if file and file.filename else None
 
-    background_tasks.add_task(send_pending_email, email, str(submission.id))
+    background_tasks.add_task(send_pending_email, email, str(submission.id), language or "EN")
     background_tasks.add_task(send_admin_alert, str(submission.id), url, email, language, has_file)
 
     return submission

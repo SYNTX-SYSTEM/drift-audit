@@ -1,37 +1,34 @@
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+import requests
 from app.config import settings
+from app.translations import get_translation
 
 def send_email(to_email: str, subject: str, body: str):
-    msg = MIMEText(body, 'plain', 'utf-8')
-    msg["Subject"] = subject
-    msg["From"] = settings.FROM_EMAIL
-    msg["To"] = to_email
+    response = requests.post(
+        "https://api.brevo.com/v3/smtp/email",
+        headers={
+            "api-key": settings.BREVO_API_KEY,
+            "Content-Type": "application/json"
+        },
+        json={
+            "sender": {"name": "SYNTX Drift Audit", "email": settings.FROM_EMAIL},
+            "to": [{"email": to_email}],
+            "subject": subject,
+            "textContent": body
+        }
+    )
+    if response.status_code not in (200, 201):
+        raise Exception(f"Brevo API error: {response.status_code} {response.text}")
 
-    with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT) as server:
-        server.starttls()
-        server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
-        server.sendmail(settings.FROM_EMAIL, to_email, msg.as_string())
-
-def send_pending_email(to_email: str, submission_id: str):
+def send_pending_email(to_email: str, submission_id: str, language: str = "EN"):
     send_email(
         to_email,
-        "Drift Audit – Eingang bestätigt",
-        f"""Deine Anfrage ist eingegangen.
-
-Submission-ID: {submission_id}
-
-Wir analysieren deinen Content und melden uns sobald dein Audit fertig ist.
-Du erhältst dann einen Link zur Zahlung und danach dein Ergebnis.
-
-— SYNTX System"""
+        get_translation(language, "pending_subject"),
+        get_translation(language, "pending_body", submission_id=submission_id)
     )
 
-def send_admin_alert(submission_id: str, url: str, email: str, language: str = None, has_file: bool = False):
+def send_admin_alert(submission_id: str, url: str, email: str, language: str = None, has_file=None):
     file_info = f"✔ {has_file}" if has_file else "✗ Kein PDF"
     lang_info = language if language else "nicht angegeben"
-
     send_email(
         settings.FROM_EMAIL,
         f"⚡ NEUE SUBMISSION — {email}",
@@ -46,54 +43,26 @@ DATEI:     {file_info}
 STATUS:    pending
 
 ══════════════════════════════
-→ Admin Dashboard öffnen:
-https://audit.syntx-system.com/docs
-
-Wenn du fertig bist:
-PATCH /admin/submissions/{submission_id}/ready
-  ?proton_link=...
-  ?delivery_password=...
-
 — SYNTX Drift Audit System"""
     )
 
-def send_ready_email(to_email: str, paypal_link: str):
+def send_ready_email(to_email: str, paypal_link: str, language: str = "EN"):
     send_email(
         to_email,
-        "Drift Audit – Dein Audit ist fertig",
-        f"""Dein Audit ist fertig.
-
-Jetzt bezahlen und dein Ergebnis erhalten:
-
-→ {paypal_link}
-
-Nach der Zahlung erhältst du automatisch:
-  1. Den Link zu deinem Audit-Dokument
-  2. Das Passwort in einer separaten Mail
-
-— SYNTX System"""
+        get_translation(language, "ready_subject"),
+        get_translation(language, "ready_body", paypal_link=paypal_link)
     )
 
-def send_delivery_link(to_email: str, proton_link: str):
+def send_delivery_link(to_email: str, proton_link: str, language: str = "EN"):
     send_email(
         to_email,
-        "Drift Audit – Dein Ergebnis",
-        f"""Dein Audit ist verfügbar.
-
-→ {proton_link}
-
-Das Passwort erhältst du in einer separaten Mail.
-
-— SYNTX System"""
+        get_translation(language, "delivery_link_subject"),
+        get_translation(language, "delivery_link_body", proton_link=proton_link)
     )
 
-def send_delivery_password(to_email: str, password: str):
+def send_delivery_password(to_email: str, password: str, language: str = "EN"):
     send_email(
         to_email,
-        "Drift Audit – Dein Zugangspasswort",
-        f"""Dein Passwort für das Audit-Dokument:
-
-{password}
-
-— SYNTX System"""
+        get_translation(language, "delivery_password_subject"),
+        get_translation(language, "delivery_password_body", password=password)
     )

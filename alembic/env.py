@@ -2,7 +2,8 @@ from logging.config import fileConfig
 from sqlalchemy import engine_from_config, pool
 from alembic import context
 from app.database import Base
-from app.models import Submission, PaymentEvent
+from app.models_old import Submission, PaymentEvent
+from app.models.structure import SuperCategory, Category, PDFItem
 from app.config import settings
 
 config = context.config

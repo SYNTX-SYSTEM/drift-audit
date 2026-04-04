@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.models import PaymentEvent, Submission, StatusEnum
+from app.models_old import PaymentEvent, Submission, StatusEnum
 from app.email_service import send_delivery_link, send_delivery_password
 
 router = APIRouter()

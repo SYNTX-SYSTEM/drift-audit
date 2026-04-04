@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from typing import Optional
 from app.database import get_db
-from app.models import Submission, StatusEnum
+from app.models_old import Submission, StatusEnum
 from app.schemas import SubmissionDetail
 from app.services import transition_status
 from app.paypal_service import create_order
