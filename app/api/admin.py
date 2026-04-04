@@ -18,13 +18,17 @@ def verify_admin(token: str = Header(...)):
 @router.get("/admin/submissions")
 def list_submissions(
     status: Optional[StatusEnum] = None,
+    limit: int = 20,
+    offset: int = 0,
     db: Session = Depends(get_db),
     token: str = Depends(verify_admin)
 ):
     query = db.query(Submission)
     if status:
         query = query.filter(Submission.status == status)
-    return query.order_by(Submission.created_at.desc()).all()
+    total = query.count()
+    items = query.order_by(Submission.created_at.desc()).offset(offset).limit(limit).all()
+    return {"total": total, "limit": limit, "offset": offset, "items": items}
 
 @router.patch("/admin/submissions/{submission_id}/ready")
 async def mark_ready(
