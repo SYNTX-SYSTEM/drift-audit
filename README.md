@@ -130,6 +130,7 @@ Zwei Domains. Ein Backend. Null Kompromisse.
 │       ├── submit.py        → POST /submit
 │       ├── admin.py         → Admin Submission Endpoints
 │       ├── admin_structure.py → Admin Structure Endpoints
+│       ├── admin_mail.py      → Admin Mail Template Endpoints
 │       ├── payment.py       → PayPal Webhook
 │       └── structure.py     → GET /structure (public)
 │
@@ -165,6 +166,7 @@ Zwei Domains. Ein Backend. Null Kompromisse.
   ├── payment_order_id VARCHAR
   ├── proton_link      VARCHAR
   ├── delivery_password VARCHAR
+  ├── paypal_link      VARCHAR
   ├── created_at       TIMESTAMP
   └── updated_at       TIMESTAMP
 
@@ -206,6 +208,13 @@ Zwei Domains. Ein Backend. Null Kompromisse.
   ├── created_at   TIMESTAMP
   └── updated_at   TIMESTAMP
 
+  MAIL_TEMPLATES (DB-editierbar via Admin)
+  ├── id          UUID PRIMARY KEY
+  ├── language    VARCHAR  (EN|DE|ZH|ES|HI|AR|PT|BN|RU|JA)
+  ├── key         VARCHAR  (pending_subject|pending_body|...)
+  ├── content     TEXT
+  └── updated_at  TIMESTAMP
+
 ══════════════════════════════════════════════════
   5  //  STATE MACHINE
 ══════════════════════════════════════════════════
@@ -241,7 +250,7 @@ Zwei Domains. Ein Backend. Null Kompromisse.
     → {id, status, created_at}
 
   ADMIN (Header: token: ADMIN_TOKEN):
-  GET   /admin/submissions?status=pending
+  GET   /admin/submissions?status=pending&limit=20&offset=0
   PATCH /admin/submissions/{id}/ready
           ?proton_link=...&delivery_password=...
   PATCH /admin/submissions/{id}/status
@@ -276,6 +285,19 @@ Zwei Domains. Ein Backend. Null Kompromisse.
   DELETE /admin/pdfs/{id}               ← soft delete
 
   PATCH  /admin/reorder
+
+── DOMAIN 3 // MAIL TEMPLATES ───────────────────
+
+  ADMIN (Header: token: ADMIN_TOKEN):
+  GET  /admin/mail-templates
+  GET  /admin/mail-templates/{language}
+  PUT  /admin/mail-templates/{language}/{key}
+  POST /admin/mail-templates/{language}/{key}/reset
+
+  Keys: pending_subject | pending_body
+        ready_subject | ready_body
+        delivery_link_subject | delivery_link_body
+        delivery_password_subject | delivery_password_body
     Body: {
       type: "super_category"|"category"|"pdf",
       items: [{id, order}]
@@ -485,6 +507,11 @@ Zwei Domains. Ein Backend. Null Kompromisse.
   ✔ joinedload (kein N+1)
   ✔ Git → github.com/SYNTX-SYSTEM/drift-audit
   ✔ Admin Dashboard (standalone HTML)
+  ✔ Mail Templates in DB (10 Sprachen x 8 Keys)
+  ✔ Mail Templates via Admin editierbar + reset
+  ✔ PayPal Link in Submissions gespeichert
+  ✔ Pagination (limit/offset) fuer Admin Submissions
+  ✔ GET /admin/structure (inkl. inaktive Items)
 
 ⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡⚡
 
